@@ -2317,9 +2317,12 @@ window.addPurchase = async function(key) {
   const cost = parseFloat(document.getElementById('purchaseCost_'+key)?.value) || 0;
   if (!qty || qty <= 0) { toast('Enter valid quantity','error'); return; }
   inventory[key].purchases += qty;
-  if (cost > 0) inventory[key].costPerUnit = cost / qty;
+    const prevPurchases = inventory[key].purchases || 0;
+  const prevCostPerUnit = inventory[key].costPerUnit || 0;
+  const newCostPerUnit = cost > 0 ? ((prevPurchases * prevCostPerUnit) + cost) / (prevPurchases + qty) : prevCostPerUnit;
+  if (cost > 0) inventory[key].costPerUnit = newCostPerUnit;
   localStorage.setItem('ccInventory', JSON.stringify(inventory));
-    await updateDoc(doc(db, 'appConfig', 'inventory'), { [`${key}.purchases`]: increment(qty), ...(cost > 0 ? { [`${key}.costPerUnit`]: cost / qty } : {}) });
+      await updateDoc(doc(db, 'appConfig', 'inventory'), { [`${key}.purchases`]: increment(qty), ...(cost > 0 ? { [`${key}.costPerUnit`]: newCostPerUnit } : {}) });
   renderInventoryGrid();
   toast(`✓ Added ${qty} ${inventory[key].unit} to ${inventory[key].name}`);
 };
@@ -2342,7 +2345,7 @@ window.editStock = async function(key) {
   if (isNaN(n) || n < 0) { toast('Invalid value','error'); return; }
   inventory[key].openingStock = n;
   localStorage.setItem('ccInventory', JSON.stringify(inventory));
-  await setDoc(doc(db, 'appConfig', 'inventory'), inventory);
+    await updateDoc(doc(db, 'appConfig', 'inventory'), { [`${key}.openingStock`]: n });
   renderInventoryGrid();
   toast(`✓ Stock updated`);
 };
