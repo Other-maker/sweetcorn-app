@@ -2319,7 +2319,7 @@ window.addPurchase = async function(key) {
   inventory[key].purchases += qty;
   if (cost > 0) inventory[key].costPerUnit = cost / qty;
   localStorage.setItem('ccInventory', JSON.stringify(inventory));
-  await setDoc(doc(db, 'appConfig', 'inventory'), inventory);
+    await updateDoc(doc(db, 'appConfig', 'inventory'), { [`${key}.purchases`]: increment(qty), ...(cost > 0 ? { [`${key}.costPerUnit`]: cost / qty } : {}) });
   renderInventoryGrid();
   toast(`✓ Added ${qty} ${inventory[key].unit} to ${inventory[key].name}`);
 };
@@ -2329,7 +2329,7 @@ window.recordLoss = async function(key) {
   if (!loss || loss <= 0) { toast('Enter valid loss','error'); return; }
   inventory[key].abnormalLoss += loss;
   localStorage.setItem('ccInventory', JSON.stringify(inventory));
-  await setDoc(doc(db, 'appConfig', 'inventory'), inventory);
+    await updateDoc(doc(db, 'appConfig', 'inventory'), { [`${key}.abnormalLoss`]: increment(loss) });
   renderInventoryGrid();
   toast(`Loss of ${loss} ${inventory[key].unit} recorded`,'warning');
 };
